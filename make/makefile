@@ -1,24 +1,17 @@
-MESA_DIR = ../../../..
+ifeq ($(MESA_DIR),)
+  $(error MESA_DIR environment variable is not set)
+endif
 
-include $(MESA_DIR)/utils/makefile_header
+include $(MESA_DIR)/make/defaults-module.mk
 
-PROG = ../colors_post_proc
+MODULE_NAME := colors_post_proc
+EXTERNAL_DEPENDS_ON := mesa-colors
 
-FFLAGS = $(FCbasic) $(FCopenmp) -I$(MESA_DIR)/include -I$(MESA_DIR)/colors/make
+SRCS := src/run.f90
 
-SRCS = run.f90
-OBJS = $(patsubst %.f90,%.o,$(SRCS))
+include $(MAKE_DIR)/work.mk
 
-VPATH = ../src
+run: $(OBJ_OUT)
+	@$(OBJ_OUT)
 
-LOAD_MESA = -L$(MESA_LIB_DIR) -lcolors -lconst -lmath -lutils -lcrlibm
-
-$(PROG): $(OBJS)
-	$(FC) $(FCbasic) $(FCopenmp) -o $(PROG) $(OBJS) $(LOAD_MESA)
-
-%.o: %.f90
-	$(FC) $(FFLAGS) -c $< -o $@
-
-.PHONY: clean
-clean:
-	-@rm -f *.o *.mod $(PROG)
+.PHONY: run
