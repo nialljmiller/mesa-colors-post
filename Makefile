@@ -11,7 +11,10 @@ SRCS := src/run.f90
 
 include $(MAKE_DIR)/work.mk
 
-run: $(OBJ_OUT)
-	@$(OBJ_OUT)
+all: $(OBJ_OUT)
+	cp $(OBJ_OUT) colors_post_proc
+
+run: all
+	./colors_post_proc
 
 .PHONY: run

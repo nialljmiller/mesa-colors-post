@@ -1,2 +1,2 @@
-#!/bin/bash
-cd make && make clean
+#!/usr/bin/env bash
+make clean
