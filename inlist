@@ -1,0 +1,22 @@
+&post_proc
+   history_file    = 'LOGS/history.data'
+   output_file     = 'post_proc_output.data'
+   ! column name in the history file to use as [M/H].
+   ! common alternatives: 'log_Z', 'initial_z'
+   metallicity_col = 'initial_feh'
+   
+   stitch_history_files = 'run1/LOGS/history.data run2/LOGS/history.data'
+   stitch_output_file   = 'history_stitched.data'
+/ ! end of post_proc namelist
+
+
+&colors
+   use_colors               = .true.
+   instrument               = 'data/colors_data/filters/Generic/Johnson'
+   stellar_atm              = 'data/colors_data/stellar_models/Kurucz2003all/'
+   vega_sed                 = 'data/colors_data/stellar_models/vega_flam.csv'
+   distance                 = 3.0857d19
+   mag_system               = 'Vega'
+   make_csv                 = .false.
+   colors_results_directory = 'SED'
+/ ! end of colors namelist
