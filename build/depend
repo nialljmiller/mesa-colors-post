@@ -1,9 +1,0 @@
-build/src/run.o.anc : src/run.f90 /home/njm/MESA/mesa/build/colors/lib/pkgconfig/../../include/colors_def.mod /home/njm/MESA/mesa/build/const/lib/pkgconfig/../../include/const_lib.mod /home/njm/MESA/mesa/build/const/lib/pkgconfig/../../include/const_def.mod /home/njm/MESA/mesa/build/colors/lib/pkgconfig/../../include/colors_lib.mod | $(MODULE_DIR)/. build/src/.
-	@touch $@
-	@echo FCOMPILE_MODULE src/run.f90 && $(FCOMPILE_MODULE) src/run.f90 -J $(MODULE_DIR)
- : build/src/run.o.anc
-build/src/run.o :  src/run.f90 /home/njm/MESA/mesa/build/colors/lib/pkgconfig/../../include/colors_def.mod /home/njm/MESA/mesa/build/const/lib/pkgconfig/../../include/const_lib.mod /home/njm/MESA/mesa/build/const/lib/pkgconfig/../../include/const_def.mod /home/njm/MESA/mesa/build/colors/lib/pkgconfig/../../include/colors_lib.mod | $(SCRATCH_DIR)/. build/src/. $(MODULE_DIR)/.
-	@rm -rf $(SCRATCH_DIR)/run.o/
-	@mkdir $(SCRATCH_DIR)/run.o/
-	@echo FCOMPILE src/run.f90 && $(FCOMPILE) src/run.f90 -o build/src/run.o -I $(MODULE_DIR) -J $(SCRATCH_DIR)/run.o/
-	@rm -rf $(SCRATCH_DIR)/run.o/
