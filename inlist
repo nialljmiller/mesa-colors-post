@@ -16,6 +16,7 @@
    vega_sed                 = 'data/colors_data/stellar_models/vega_flam.csv'
    distance                 = 3.0857d19
    mag_system               = 'Vega'
-   make_csv                 = .false.
+   make_csv                 = .true.
+   sed_per_model            = .true.
    colors_results_directory = 'SED'
 / ! end of colors namelist

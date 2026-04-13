@@ -2,7 +2,7 @@ ifeq ($(MESA_DIR),)
   $(error MESA_DIR environment variable is not set)
 endif
 
-include $(MESA_DIR)/make/defaults-module.mk
+include $(MESA_DIR)/utils/makefile_header
 
 MODULE_NAME := colors_post_proc
 EXTERNAL_DEPENDS_ON := mesa-colors
