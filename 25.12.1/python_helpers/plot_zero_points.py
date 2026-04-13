@@ -5,6 +5,9 @@ compare_mag_systems.py
 Runs MESA colors post-processor 3 times with different magnitude zero-point
 systems (Vega, AB, ST) and overlays the resulting CMDs for comparison.
 
+After each post-processing run, stitches the colors output onto the MESA
+history file via stitch_history.stitch() before saving results.
+
 Usage: python compare_mag_systems.py
        (Run from the custom_colors test suite directory)
 
@@ -18,9 +21,15 @@ import os
 import re
 import shutil
 import subprocess
+import sys
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+# stitch_history.py lives alongside this script
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from stitch_history import stitch
 
 # Configuration
 MAG_SYSTEMS = ["Vega", "AB", "ST"]
@@ -29,31 +38,25 @@ INLIST_COLORS = "inlist"
 LOGS_ORIGINAL = "LOGS_original"  # backup of original MESA run — preserved across runs
 
 os.chdir("../")
+ROOT_DIR = Path(os.getcwd()).resolve()
 
 
 def read_inlist(filename):
-    """Read inlist file content."""
     with open(filename, "r") as f:
         return f.read()
 
 
 def write_inlist(filename, content):
-    """Write inlist file content."""
     with open(filename, "w") as f:
         f.write(content)
 
 
 def modify_mag_system(content, mag_system):
-    """Change the mag_system parameter in inlist content."""
     pattern = r"(mag_system\s*=\s*')[^']*(')"
     return re.sub(pattern, rf"\g<1>{mag_system}\g<2>", content)
 
 
 def ensure_logs_backup():
-    """
-    Back up the original LOGS directory to LOGS_original if not already done.
-    This must exist before the first run wipes LOGS.
-    """
     if os.path.exists(LOGS_ORIGINAL):
         return True
     if os.path.exists("LOGS"):
@@ -68,25 +71,21 @@ def ensure_logs_backup():
 
 
 def restore_logs():
-    """Restore LOGS from LOGS_original so the post-processor has its input."""
     if os.path.exists("LOGS"):
         shutil.rmtree("LOGS")
     shutil.copytree(LOGS_ORIGINAL, "LOGS")
 
 
 def run_postproc(mag_system, run_dir):
-    """Run the colors post-processor with the specified mag_system."""
+    """Run the colors post-processor, stitch colors onto history, save LOGS."""
     print(f"\n{'=' * 60}")
     print(f"Running colors post-processor with mag_system = {mag_system}")
     print(f"{'=' * 60}")
 
-    # Restore original LOGS so the post-processor can read history.data
     restore_logs()
 
-    # Temporarily patch the inlist
     original_content = read_inlist(INLIST_COLORS)
     modified_content = modify_mag_system(original_content, mag_system)
-    # Disable pgstar for batch runs
     modified_content = re.sub(
         r"pgstar_flag\s*=\s*\.true\.", "pgstar_flag = .false.", modified_content
     )
@@ -102,16 +101,23 @@ def run_postproc(mag_system, run_dir):
         if result.returncode != 0:
             print(f"Post-processor failed for {mag_system}")
             print(result.stderr)
+            return
         else:
             print(f"Post-processor succeeded for {mag_system}")
     except subprocess.TimeoutExpired:
         print(f"Post-processor timed out for {mag_system}")
+        return
     except Exception as e:
         print(f"Error running post-processor: {e}")
+        return
     finally:
         write_inlist(INLIST_COLORS, original_content)
 
-    # Save this run's LOGS
+    # Stitch colors output onto LOGS/history.data
+    print(f"Stitching colors into history.data for {mag_system}...")
+    stitch(root_dir=ROOT_DIR)
+
+    # Save LOGS — history.data now contains the color columns
     if os.path.exists("LOGS"):
         if os.path.exists(run_dir):
             shutil.rmtree(run_dir)
@@ -120,7 +126,6 @@ def run_postproc(mag_system, run_dir):
 
 
 def read_mesa_history(logs_dir):
-    """Read MESA history.data and return as dict of arrays."""
     history_file = os.path.join(logs_dir, "history.data")
 
     if not os.path.exists(history_file):
@@ -130,7 +135,6 @@ def read_mesa_history(logs_dir):
     with open(history_file, "r") as f:
         lines = f.readlines()
 
-    # Find the column-names header line
     header_line = 5
     for i, line in enumerate(lines):
         if "model_number" in line:
@@ -149,7 +153,6 @@ def read_mesa_history(logs_dir):
 
 
 def find_column(data, candidates):
-    """Return the first candidate column name found in data, or None."""
     for name in candidates:
         if name in data:
             return name
@@ -157,24 +160,18 @@ def find_column(data, candidates):
 
 
 def plot_cmd_comparison(results):
-    """Plot CMD comparison for all mag systems."""
-
-    # Print available columns from the first successful result so the user
-    # can verify the filter names if the plots come out empty.
     for mag_system, data in results.items():
         if data is not None:
             print(f"\nAvailable history columns ({mag_system}):")
             print("  " + "  ".join(data.keys()))
             break
 
-    # Common alternative column names for Bessell B, V, U filters
     B_CANDIDATES = ["B", "Bessell_B", "bessell_B", "mag_B", "johnson_B"]
     V_CANDIDATES = ["V", "Bessell_V", "bessell_V", "mag_V", "johnson_V"]
     U_CANDIDATES = ["U", "Bessell_U", "bessell_U", "mag_U", "johnson_U"]
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
-    # CMD 1: B-V vs V
     ax1 = axes[0]
     for mag_system, data in results.items():
         if data is None:
@@ -201,7 +198,6 @@ def plot_cmd_comparison(results):
     ax1.legend(loc="best")
     ax1.grid(True, alpha=0.3)
 
-    # CMD 2: U-B vs B
     ax2 = axes[1]
     for mag_system, data in results.items():
         if data is None:
@@ -237,7 +233,6 @@ def plot_cmd_comparison(results):
 
 
 def main():
-    """Main execution."""
     if not os.path.exists(INLIST_COLORS):
         print(f"Error: {INLIST_COLORS} not found. Run from custom_colors directory.")
         return
