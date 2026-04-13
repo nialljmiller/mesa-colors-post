@@ -1,0 +1,21 @@
+&post_proc
+   history_file  = 'LOGS/history.data'
+   output_file   = 'post_proc_output.data'
+   ! Solar reference log10(Z_sun/X_sun) for computing [Fe/H] = log10(Z/X) - log_ZX_solar.
+   ! Default matches GS98 (Z_sun=0.0188, X_sun=0.7379) which is the reference for
+   ! the Kurucz2003all atmosphere grid shipped with MESA.
+   ! Change this if using a different atmosphere grid.
+   log_ZX_solar  = -1.594d0
+/ ! end of post_proc namelist
+
+
+&colors
+   use_colors               = .true.
+   instrument               = 'data/colors_data/filters/Generic/Johnson'
+   stellar_atm              = 'data/colors_data/stellar_models/Kurucz2003all/'
+   vega_sed                 = 'data/colors_data/stellar_models/vega_flam.csv'
+   distance                 = 3.0857d19
+   mag_system               = 'Vega'
+   make_csv                 = .false.
+   colors_results_directory = 'SED'
+/ ! end of colors namelist
